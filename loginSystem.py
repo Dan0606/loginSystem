@@ -9,6 +9,7 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QMessageBox
 from database import Database
 from time import sleep
 
@@ -160,6 +161,37 @@ class Ui_MainWindow(object):
         self.detailsWongLabel.setAlignment(QtCore.Qt.AlignCenter)
         self.detailsWongLabel.setObjectName("detailsWongLabel")
         MainWindow.setCentralWidget(self.centralwidget)
+        self.accountAlreadyExistsLabel = QtWidgets.QLabel(self.centralwidget)
+        self.accountAlreadyExistsLabel.setGeometry(QtCore.QRect(380, 140, 251, 31))
+        font = QtGui.QFont()
+        font.setFamily("Microsoft Tai Le")
+        font.setPointSize(16)
+        font.setBold(True)
+        font.setWeight(75)
+        self.accountAlreadyExistsLabel.setFont(font)
+        self.accountAlreadyExistsLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.accountAlreadyExistsLabel.setObjectName("accountAlreadyExistsLabel")
+        self.accountCreatedLabel = QtWidgets.QLabel(self.centralwidget)
+        self.accountCreatedLabel.setGeometry(QtCore.QRect(380, 140, 251, 31))
+        font = QtGui.QFont()
+        font.setFamily("Microsoft Tai Le")
+        font.setPointSize(16)
+        font.setBold(True)
+        font.setWeight(75)
+        self.accountCreatedLabel.setFont(font)
+        self.accountCreatedLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.accountCreatedLabel.setObjectName("accountCreatedLabel")
+        self.deleteAccountButton = QtWidgets.QPushButton(self.centralwidget)
+        self.deleteAccountButton.setGeometry(QtCore.QRect(670, 20, 111, 31))
+        font = QtGui.QFont()
+        font.setFamily("Microsoft Tai Le")
+        font.setPointSize(10)
+        font.setBold(True)
+        font.setWeight(75)
+        self.deleteAccountButton.setFont(font)
+        self.deleteAccountButton.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.deleteAccountButton.setStyleSheet("background-color: white;")
+        self.deleteAccountButton.setObjectName("deleteAccountButton")
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 21))
         self.menubar.setObjectName("menubar")
@@ -168,14 +200,15 @@ class Ui_MainWindow(object):
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
 
-        self.joinWinLabels = [self.joinButton, self.createAccountButton, self.dontHaveAccountLabal, self.usernameTextEdit, self.usernameTitle, self.passwordTextEdit, self.passwordTitle]
-        self.createWinLabels = [self.goToJoinButton, self.createFinalButton, self.alreadyHaveAccountLabel, self.usernameTextEdit, self.usernameTitle, self.passwordTextEdit, self.passwordTitle]
-        self.welcomeWinLabels = [self.welcomeLabel, self.backToJoinLabel, self.goToJoinButton]
+        self.joinWinLabels = [self.joinButton, self.createAccountButton, self.dontHaveAccountLabal, self.usernameTextEdit, self.usernameTitle, self.passwordTextEdit, self.passwordTitle, self.detailsWongLabel]
+        self.createWinLabels = [self.goToJoinButton, self.createFinalButton, self.alreadyHaveAccountLabel, self.usernameTextEdit, self.usernameTitle, self.passwordTextEdit, self.passwordTitle, self.accountAlreadyExistsLabel, self.accountCreatedLabel]
+        self.welcomeWinLabels = [self.welcomeLabel, self.backToJoinLabel, self.goToJoinButton, self.deleteAccountButton ]
 
         self.joinButton.clicked.connect(self.joinClicked)
         self.createAccountButton.clicked.connect(self.goToCreateClicked)
         self.goToJoinButton.clicked.connect(self.goToJoinClicked)
         self.createFinalButton.clicked.connect(self.createAccountClicked)
+        self.deleteAccountButton.clicked.connect(self.deleteAccount)
         
         for label in self.createWinLabels:
             label.setHidden(True)
@@ -204,14 +237,20 @@ class Ui_MainWindow(object):
         self.welcomeLabel.setText(_translate("MainWindow", "Welcome "))
         self.backToJoinLabel.setText(_translate("MainWindow", "Go Back To Join Page"))
         self.detailsWongLabel.setText(_translate("MainWindow", "Wrong Username Or Password, Try Again"))
+        self.accountAlreadyExistsLabel.setText(_translate("MainWindow", "Account Already Exists"))
+        self.accountCreatedLabel.setText(_translate("MainWindow", "Account Created"))
+        self.deleteAccountButton.setText(_translate("MainWindow", "Delete Account"))
 
 
     def joinClicked(self):
+        global currentPassword, currentUsername
         username = self.usernameTextEdit.text()
         password = self.passwordTextEdit.text()
         if database.isAccountExists(username, password) == True:
             self.detailsWongLabel.setHidden(True)
             self.welcomeLabel.setText("Welcome " + username)
+            currentUsername = username
+            currentPassword = password          
             for label in self.joinWinLabels:
                 label.setHidden(True)
             for label in self.welcomeWinLabels:
@@ -230,7 +269,11 @@ class Ui_MainWindow(object):
         for label in self.joinWinLabels:
             label.setHidden(True)
         for label in self.createWinLabels:
-            label.setHidden(False)
+            if label == self.accountCreatedLabel or label == self.accountAlreadyExistsLabel:
+                label.setHidden(True)
+            else:
+                label.setHidden(False)
+
 
     def goToJoinClicked(self):
         self.usernameTextEdit.setText("")
@@ -238,19 +281,40 @@ class Ui_MainWindow(object):
         for label in self.createWinLabels:
             label.setHidden(True)
         for label in self.joinWinLabels:
-            label.setHidden(False)
+            if label != self.detailsWongLabel:
+                label.setHidden(False)
         for label in self.welcomeWinLabels:
             label.setHidden(True)
+        self.goToJoinButton.setGeometry(QtCore.QRect(510, 470, 111, 31))
 
         
     def createAccountClicked(self):
         un = self.usernameTextEdit.text()
         pw = self.passwordTextEdit.text()
-        if database.createAccount(un, pw) == "Username Exists":           
-            print("Username Already Exists")
+        isAccountCreated = database.createAccount(un, pw)
+        if  isAccountCreated == "Username Exists":           
+            self.accountAlreadyExistsLabel.setHidden(False)
         else:
-            print("account created")
-        
+            self.accountCreatedLabel.setHidden(False)
+        self.usernameTextEdit.setText("")
+        self.passwordTextEdit.setText("")
+
+    def deleteAccount(self):
+        msg = QMessageBox()
+        msg.setWindowTitle("delete account")
+        msg.setText("are you sure you want to delete the account?")
+        msg.setIcon(QMessageBox.Warning)
+        msg.setStandardButtons(QMessageBox.Yes|QMessageBox.No)
+        msg.setDefaultButton(QMessageBox.Yes)
+        msg.buttonClicked.connect(self.confirmDelete)
+        x = msg.exec_()
+
+    def confirmDelete(self, i):
+        if i.text() == "&Yes":
+            database.deleteAccount(currentUsername, currentPassword)
+            self.goToJoinClicked()
+
+            
 
 
 if __name__ == "__main__":
