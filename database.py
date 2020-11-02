@@ -1,7 +1,5 @@
 import pymongo
 
-
-
 class Database():
     def __init__(self):
         self.cluster = pymongo.MongoClient("mongodb+srv://Dan:1234@cluster0.y2fmq.mongodb.net/test?retryWrites=true&w=majority")
@@ -31,6 +29,9 @@ class Database():
             self.collection.insert_one(details)
             return "account Created"
 
+    def deleteAccount(self, un, pw):
+        self.collection.delete_one({"username" : un, "password" : pw})
+        return "Account Deleted"
 
     
 
